@@ -1,5 +1,6 @@
 import requests
 from typing import Dict
+import sys,os
 
 def input_city_name() -> str:
     """Ask user for city name. This function will keep asking until a valid
@@ -55,8 +56,11 @@ def fetch_api_info(city_name: str):
 
     Prints:
         Error messages for API-related issues or request exceptions.
-    """    
-    api_key = "2c826facbf92103fc989b8b9c5e9f19f"
+    """
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+    if not api_key:
+        print("ERROR: The API key is not configurated.")
+        sys.exit()
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city_name}&appid={api_key}&units=metric&lang=es"
     try:
         response = requests.get(url)
