@@ -2,6 +2,9 @@ import requests
 from typing import Dict
 
 def input_city_name() -> str:
+    """Ask user for city name. This function will keep asking until a valid
+    answer is given. The answer is valid if it does not contain any numbers.
+    """
     while True:
         city_name = input("Please enter the name of the city you'd like to know the weather of: ")
         if any(cn.isdigit() for cn in city_name):
@@ -11,6 +14,9 @@ def input_city_name() -> str:
     return city_name
 
 def parse_weather_data(data: Dict[str,any]) -> Dict[str,any]:
+    """Takes the data from the weather API and transforms it into a 
+    dictionary with the most relevant information.
+    """
     return {
 		'city': data['name'],
 		'temp': data['main']['temp'],
@@ -20,6 +26,16 @@ def parse_weather_data(data: Dict[str,any]) -> Dict[str,any]:
 	}
 
 def show_weather_info(weather_info: Dict[str,any]) -> None:
+    """
+    Displays the weather information for a given city.
+
+    Args:
+        weather_info (Dict[str, any]): A dictionary containing weather data including
+                                       'city', 'temp', 'description', 'humidity', and 'wind'.
+
+    Returns:
+        None
+    """
     print(f"Here is the weather information for {weather_info['city']}: ")
     print(f"Temperatue: {weather_info['temp']}")
     print(f"Description: {weather_info['description']}")
@@ -27,6 +43,19 @@ def show_weather_info(weather_info: Dict[str,any]) -> None:
     print(f"Wind: {weather_info['wind']}")
     
 def fetch_api_info(city_name: str):
+    """
+    Fetches weather information for a given city from the OpenWeatherMap API.
+
+    Args:
+        city_name (str): The name of the city for which to fetch weather information.
+
+    Returns:
+        dict: A dictionary containing weather data if the API call is successful, 
+              or None if there is an error.
+
+    Prints:
+        Error messages for API-related issues or request exceptions.
+    """    
     api_key = "2c826facbf92103fc989b8b9c5e9f19f"
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city_name}&appid={api_key}&units=metric&lang=es"
     try:
@@ -42,6 +71,12 @@ def fetch_api_info(city_name: str):
         return None
     
 def main():
+    """
+    Entry point of the program.
+
+    Asks user for city name, fetches the weather information from the API, parses it
+    and shows it to the user.
+    """
     city_name = input_city_name()
     data = fetch_api_info(city_name)
     if data:
