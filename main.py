@@ -1,5 +1,4 @@
 import requests
-from typing import Dict
 import os
 
 class WeatherAPIError(Exception):
