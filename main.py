@@ -1,6 +1,10 @@
 import requests
 from typing import Dict
-import sys,os
+import os
+
+class WeatherAPIError(Exception):
+    """Custom exception for API errors."""
+    pass
 
 def input_city_name() -> str:
     """Ask user for city name. This function will keep asking until a valid
@@ -14,7 +18,7 @@ def input_city_name() -> str:
             break
     return city_name
 
-def parse_weather_data(data: Dict[str,any]) -> Dict[str,any]:
+def parse_weather_data(data: dict[str,any]) -> dict[str,any]:
     """Takes the data from the weather API and transforms it into a 
     dictionary with the most relevant information.
     """
@@ -26,7 +30,7 @@ def parse_weather_data(data: Dict[str,any]) -> Dict[str,any]:
 		'wind': data['wind']['speed']
 	}
 
-def show_weather_info(weather_info: Dict[str,any]) -> None:
+def show_weather_info(weather_info: dict[str,any]) -> None:
     """
     Displays the weather information for a given city.
 
@@ -38,7 +42,7 @@ def show_weather_info(weather_info: Dict[str,any]) -> None:
         None
     """
     print(f"Here is the weather information for {weather_info['city']}: ")
-    print(f"Temperatue: {weather_info['temp']}")
+    print(f"Temperature: {weather_info['temp']}")
     print(f"Description: {weather_info['description']}")
     print(f"Humidity: {weather_info['humidity']}")
     print(f"Wind: {weather_info['wind']}")
@@ -48,44 +52,54 @@ def fetch_api_info(city_name: str):
     Fetches weather information for a given city from the OpenWeatherMap API.
 
     Args:
-        city_name (str): The name of the city for which to fetch weather information.
+        city_name (str): The name of the city for which to fetch weather data.
 
     Returns:
-        dict: A dictionary containing weather data if the API call is successful, 
-              or None if there is an error.
+        dict: A dictionary containing weather data if the request is successful.
 
-    Prints:
-        Error messages for API-related issues or request exceptions.
+    Raises:
+        WeatherAPIError: If the API key is missing, if there is an API error, 
+                         or if there is a network error.
     """
+    if not isinstance(city_name, str) or not city_name.strip():
+        raise WeatherAPIError("City name must be a non-empty string.")
     api_key = os.getenv("OPENWEATHER_API_KEY")
     if not api_key:
-        print("ERROR: The API key is not configurated.")
-        sys.exit()
+        raise WeatherAPIError("API key is missing.")
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city_name}&appid={api_key}&units=metric&lang=es"
     try:
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
         if data.get("cod") != 200:
-            print(f"Error de API: {data.get('message', 'Error desconocido')}")
-            return
+            raise WeatherAPIError(f"API error: {data.get('message', 'Unknown error')}")
         return data
     except requests.exceptions.RequestException as e:
-        print(f"There was an issue trying to access to the weather information: {e}")
-        return None
+        raise WeatherAPIError(f"Network error: {e}")
     
 def main():
     """
-    Entry point of the program.
-
-    Asks user for city name, fetches the weather information from the API, parses it
-    and shows it to the user.
+    Main entry point for the script. The script does the following:
+    
+    1. Asks the user for the name of the city they want to know the weather of.
+    2. Fetches the weather information for the given city from the 
+       OpenWeatherMap API.
+    3. Parses the weather data into a dictionary with the most relevant
+       information.
+    4. Shows the weather information to the user.
+    
+    If there is an error during any of these steps, the error is caught and
+    shown to the user.
     """
-    city_name = input_city_name()
-    data = fetch_api_info(city_name)
-    if data:
+    try:
+        city_name = input_city_name()
+        data = fetch_api_info(city_name)
         weather_info = parse_weather_data(data)
         show_weather_info(weather_info)
+    except WeatherAPIError as e:
+        print(f"Error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
         
 if __name__ == "__main__":
     main()
